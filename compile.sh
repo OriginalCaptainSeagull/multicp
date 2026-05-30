@@ -1,6 +1,6 @@
 FLAGS=''
 COMPILER=gcc
 FILES='multicp.c helpers.c'
-OUTPUT=multicp
+OUTPUT=/usr/bin/multicp
 
-${COMPILER} ${FLAGS} ${FILES} -o ${OUTPUT}
+sudo ${COMPILER} ${FLAGS} ${FILES} -o ${OUTPUT}

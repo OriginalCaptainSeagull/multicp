@@ -2,19 +2,37 @@
 #include "api.h"
 #include <stdlib.h>
 #include <string.h>
-
-char *concat (const char *first, const char *second)
+// mo/cha\0
+// mo^cha\0
+char* get_filename (const char *path)
 {
+  unsigned length = 0;
+  int slashpos = -1;
+  for (unsigned i = 0; path[i]; ++i, ++length)
+  {
+    if (path[i] == '/')
+      slashpos = i;
+  }
+  if (slashpos == -1)
+    return path;
+  path += slashpos + 1;
+  return path;
+}
+
+char *format_dest (const char *raw_src, const char *raw_dest)
+{
+  char *src = get_filename (raw_src);
   unsigned i = 1;
-  for (unsigned j = 0; first[j]; ++j, ++i);
-  for (unsigned j = 0; second[j]; ++i, ++j);
+  for (unsigned j = 0; src[j]; ++i, ++j);
+  for (unsigned j = 0; raw_dest[j]; ++i, ++j);
 
   char *result = calloc (i + 2, sizeof (char));
 
-  strcat (result, second);
-  for (i = 0; second[i]; ++i);
-  result[i] = '/';
-  strcat (result, first);
+  strcat (result, raw_dest);
+  for (i = 0; raw_dest[i]; ++i);
+  if (raw_dest[i - 1] != '/')
+    result[i] = '/';
+  strcat (result, src);
   return result;
 }
 
@@ -32,7 +50,7 @@ int search_for_dest (const char *arg)
 int copy_file (const char *src, const char *dest)
 {
   dest += 2;
-  dest = concat (src, dest);
+  dest = format_dest (src, dest);
   file source, destination;
   const perms permissions = O_CREAT | O_WRONLY | O_TRUNC;
   mode_t metadata = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
