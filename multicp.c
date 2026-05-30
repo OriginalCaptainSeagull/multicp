@@ -6,7 +6,7 @@ int main (int argc, char *argv[])
 {
   if (argc < 3)
   {
-    write (stderr, "usage error!\nmulticp [FILES...] -d[DESTINATIONS...]\n", 53);
+    fprintf (stderr, "Incorrect usage of %s!\nExample: %s [FILES...] -d[DESTINATION...] [FILES...]", argv[0], argv[0]);
     return 1;
   }
   int dest_arg = 0;
@@ -16,12 +16,12 @@ int main (int argc, char *argv[])
       dest_arg = i;
     else if (dest_arg && search_for_dest (argv[i]) == 0)
     {
-      write (stderr, "usage error: multiple destinations!", 36);
+      fprintf (stderr, "Incorrect usage of %s!\nExample: %s [FILES...] -d[DESTINATION...] [FILES...]", argv[0], argv[0]);
     }
   }
   if (dest_arg == 0)
   {
-    write (stderr, "usage error!\ndestination not found. use flag -d to point it out!\n", 66);
+    fprintf (stderr, "Couldn\'t find destinantion!\nExample: %s [FILES...] -d[DESTINATION] [FILES...]", argv[0]);
     return 1;
   }
 
@@ -30,10 +30,7 @@ int main (int argc, char *argv[])
     if (i == dest_arg)
       continue;
     if (copy_file (argv[i], argv[dest_arg]))
-    {
-      write (stderr, "an unknown error occured!\n", 27);
       return 1;
-    }
   }
   return 0;
 }

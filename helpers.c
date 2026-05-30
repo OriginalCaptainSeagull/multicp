@@ -43,28 +43,34 @@ int copy_file (const char *src, const char *dest)
   destination = open (dest, permissions, metadata);
   if (!source)
   {
-    write (stderr, "couldn\'t open ", 15);
-    unsigned i;
-    for (i = 0; src[i]; ++i);
-    write (stderr, src, i + 1);
-    write (stderr, " file. check if the name is correct.\n", 38);
+    fprintf  (stderr, "Couldn\'t create a copy of a file %s: ", src);
+    perror (NULL);
+    free (dest);
     return 1;
   }
   if (!destination)
   {
-    write (stderr, "couldn\'t open ", 15);
-    unsigned i = 0;
-    for (; dest[i]; ++i);
-    write (stderr, dest, i + 1);
-    write (stderr, " file. check if the name is correct.\n", 38);
+    fprintf (stderr, "Couldn\'t create a copy of a file %s: ", src);
+    perror (NULL);
+    close (source);
+    free (dest);
+    return 1;
   }
+  int err_check;
   while ((bytes_read = read (source, buff, BUFFSIZE)) > 0)
   {
-    if (write (destination, buff, bytes_read) == 0)
+    err_check = write (destination, buff, bytes_read);
+    if (err_check == -1)
+    {
+      fprintf (stderr, "An error occured while copying %s: ", src);
+      perror (NULL);
       break;
+    }
   }
   close (source);
   close (destination);
   free (dest);
+  if (err_check == -1)
+    return 1;
   return 0;
 }
