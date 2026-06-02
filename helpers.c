@@ -1,10 +1,19 @@
+#include "colors.h"
 #include "types.h"
 #include "api.h"
 #include <stdlib.h>
 #include <string.h>
-// mo/cha\0
-// mo^cha\0
-char* get_filename (const char *path)
+
+void print_error (const char *error, const char *filename)
+{
+  fprintf (stderr, COLOR_RED);
+  fprintf (stderr, "multicp: error: ");
+  fprintf (stderr, COLOR_RESET);
+  fprintf (stderr, "%s%s: %s\n", error, filename, strerror(errno));
+  return;
+}
+
+char* get_filename (char *path)
 {
   unsigned length = 0;
   int slashpos = -1;
@@ -19,7 +28,7 @@ char* get_filename (const char *path)
   return path;
 }
 
-char *format_dest (const char *raw_src, const char *raw_dest)
+char *format_dest (char *raw_src, char *raw_dest)
 {
   char *src = get_filename (raw_src);
   unsigned i = 1;
@@ -36,18 +45,7 @@ char *format_dest (const char *raw_src, const char *raw_dest)
   return result;
 }
 
-int search_for_dest (const char *arg)
-{
-  static const char *const flag = "-d";
-  for (unsigned i = 0; i < 2; ++i)
-  {
-    if (arg[i] != flag[i])
-      return -1;
-  }
-  return 0;
-}
-
-int copy_file (const char *src, const char *dest)
+int copy_file (char *src, char *dest)
 {
   dest += 2;
   dest = format_dest (src, dest);
@@ -55,21 +53,23 @@ int copy_file (const char *src, const char *dest)
   const perms permissions = O_CREAT | O_WRONLY | O_TRUNC;
   mode_t metadata = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
   ssize_t bytes_read;
-  char buff[BUFFSIZE];
+  static char buff[BUFFSIZE];
 
   source = open (src, O_RDONLY);
-  destination = open (dest, permissions, metadata);
-  if (!source)
+  if (source == -1)
   {
-    fprintf  (stderr, "Couldn\'t create a copy of a file %s: ", src);
-    perror (NULL);
+    print_error ("Couldn\'t create a copy of a file ", src);
+    // fprintf  (stderr, "Couldn\'t create a copy of a file %s: ", src);
+    // perror (NULL);
     free (dest);
     return 1;
   }
-  if (!destination)
+  destination = open (dest, permissions, metadata);
+  if (destination == -1)
   {
-    fprintf (stderr, "Couldn\'t create a copy of a file %s: ", src);
-    perror (NULL);
+    print_error ("Couldn\'t create a copy of a file ", dest );
+    // fprintf (stderr, "Couldn\'t create a copy of a file %s: ", src);
+    // perror (NULL);
     close (source);
     free (dest);
     return 1;

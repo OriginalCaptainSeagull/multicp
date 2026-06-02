@@ -1,27 +1,19 @@
-#include "prots.h"
+#include "signatures.h"
 #include "api.h"
 #include "types.h"
 
 int main (int argc, char *argv[])
 {
-  if (argc < 3)
-  {
-    fprintf (stderr, "Incorrect usage of %s!\nExample: %s [FILES...] -d[DESTINATION...] [FILES...]\n", argv[0], argv[0]);
+  if (check_number_of_args (argc))
     return 1;
-  }
+
   int dest_arg = 0;
-  for (unsigned i = 1; i < argc; ++i)
-  {
-    if (!dest_arg && search_for_dest (argv[i]) == 0)
-      dest_arg = i;
-    else if (dest_arg && search_for_dest (argv[i]) == 0)
-    {
-      fprintf (stderr, "Incorrect usage of %s!\nExample: %s [FILES...] -d[DESTINATION...] [FILES...]\n", argv[0], argv[0]);
-    }
-  }
+  dest_arg = determine_dest (argv, argc);
+  if (dest_arg == -1)
+    return 1;
   if (dest_arg == 0)
   {
-    fprintf (stderr, "Couldn\'t find destinantion!\nExample: %s [FILES...] -d[DESTINATION] [FILES...]\n", argv[0]);
+    usage_error ("Couldn\'t find destinantion!\nExample: multicp FILES... -dDESTINATION FILES...\n");
     return 1;
   }
 

@@ -6,4 +6,5 @@
 #define STDERR 2
 typedef int file;
 typedef int perms;
+typedef int errusage;
 #endif
