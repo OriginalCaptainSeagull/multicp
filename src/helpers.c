@@ -19,7 +19,22 @@ void print_error (const char *error, const char *filename)
   // which is the only difference from it's alternative
   // from src/cliargs.c
 }
-
+/*
+char *get_filename (char *path)
+{
+  char *newpath = strrchr (path, '@');
+  if (newpath)
+  {
+    printf ("%c", newpath[0]);
+    newpath[0] = '\0';
+    return newpath + 1;
+  }
+  newpath = strrchr (path, '/');
+  if (newpath)
+    return newpath + 1;
+  return newpath;
+}
+*/
 char* get_filename (char *path)
 {
   unsigned length = 0;
@@ -39,12 +54,12 @@ char* get_filename (char *path)
       // so the syscall open() will not try to open a file like
       // "file@newname"
       // but instead will open a file named "file"
-    } 
+    }
   }
-  if (atpos)
+  if (atpos > 0)
     return (path + atpos + 1); // return new file name
-  else if (slashpos >= 0)
-      return (path + slashpos + 1); // returns the name
+  else if (slashpos > 0)
+    return (path + slashpos + 1); // returns the name
   return path;
 }
 
@@ -55,20 +70,24 @@ char *format_dest (char *raw_src, char *raw_dest)
   for (unsigned j = 0; src[j]; ++i, ++j);
   for (unsigned j = 0; raw_dest[j]; ++i, ++j);
 
-  char *result = calloc (i + 2, sizeof (char));
+  char *result = (char *) calloc (i + 2, sizeof (char));
 
   strcat (result, raw_dest);
   for (i = 0; raw_dest[i]; ++i);
-  if (raw_dest[i - 1] != '/')
-    result[i] = '/';
+  result[i] = '/';
   strcat (result, src);
   return result;
 }
 
 int copy_file (char *src, char *dest)
 {
+  puts (src);
+  puts (dest);
+  int err_check = 0;
   dest += 2; // getting rid of the "-d"
+  puts (dest);
   dest = format_dest (src, dest);
+  puts (dest);
   file source, destination;
   const perms permissions = O_CREAT | O_WRONLY | O_TRUNC; // ask to get enough POWER to
   // create (if the file doesn't exist), write to it and clear the content if the file
@@ -82,21 +101,18 @@ int copy_file (char *src, char *dest)
   if (source == -1)
   {
     print_error ("Couldn\'t create a copy of a file ", src);
-    free (dest); // free() because the path to destination
-    // is actually on an allocated area
-    return 1;
+    err_check = -1;
+    goto quit;
   }
   destination = open (dest, permissions, metadata);
   if (destination == -1)
   {
     print_error ("Couldn\'t create a copy of a file ", dest );
     // skill issue of your OS imo :/
-    close (source);
-    free (dest);
-    return 1;
+    err_check = -1;
+    goto quitall;
   }
 
-  int err_check = 0;
   while ((bytes_read = read (source, buff, BUFFSIZE)) > 0)
   {
     err_check = write (destination, buff, bytes_read);
@@ -106,9 +122,12 @@ int copy_file (char *src, char *dest)
       break;
     }
   }
+quitall:
+  free (dest);
+quit:
   close (source);
   close (destination);
-  free (dest);
+  printf ("%d", err_check);
   if (err_check == -1)
     return 1;
   return 0;

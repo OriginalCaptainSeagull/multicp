@@ -5,6 +5,7 @@
 #ifndef STD_C
 #define STD_C
 #include <stdlib.h>
+#include <string.h>
 #endif
 
 void usage_error (const char* restrict error)
@@ -32,13 +33,8 @@ int check_number_of_args (int argc)
 int search_for_dest (const char *arg)
 {
   static const char *const flag = "-d";
-  for (unsigned i = 0; i < 2; ++i)
-  {
-    if (arg[i] != flag[i])
-      return -1;
-    // if the argument doesn't start with "-d"
-    // then it is considered a file
-  }
+  if (strncmp (flag, arg, 2))
+    return 1;
   return 0;
 }
 
