@@ -81,13 +81,9 @@ char *format_dest (char *raw_src, char *raw_dest)
 
 int copy_file (char *src, char *dest)
 {
-  puts (src);
-  puts (dest);
   int err_check = 0;
   dest += 2; // getting rid of the "-d"
-  puts (dest);
   dest = format_dest (src, dest);
-  puts (dest);
   file source, destination;
   const perms permissions = O_CREAT | O_WRONLY | O_TRUNC; // ask to get enough POWER to
   // create (if the file doesn't exist), write to it and clear the content if the file
