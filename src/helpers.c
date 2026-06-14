@@ -19,22 +19,7 @@ void print_error (const char *error, const char *filename)
   // which is the only difference from it's alternative
   // from src/cliargs.c
 }
-/*
-char *get_filename (char *path)
-{
-  char *newpath = strrchr (path, '@');
-  if (newpath)
-  {
-    printf ("%c", newpath[0]);
-    newpath[0] = '\0';
-    return newpath + 1;
-  }
-  newpath = strrchr (path, '/');
-  if (newpath)
-    return newpath + 1;
-  return newpath;
-}
-*/
+
 char* get_filename (char *path)
 {
   unsigned length = 0;
@@ -65,6 +50,7 @@ char* get_filename (char *path)
 
 char *format_dest (char *raw_src, char *raw_dest)
 {
+  raw_dest += 2;
   char *src = get_filename (raw_src);
   unsigned i = 1;
   for (unsigned j = 0; src[j]; ++i, ++j);
@@ -81,50 +67,43 @@ char *format_dest (char *raw_src, char *raw_dest)
 
 int copy_file (char *src, char *dest)
 {
-  int err_check = 0;
-  dest += 2; // getting rid of the "-d"
-  dest = format_dest (src, dest);
-  file source, destination;
-  const perms permissions = O_CREAT | O_WRONLY | O_TRUNC; // ask to get enough POWER to
-  // create (if the file doesn't exist), write to it and clear the content if the file
-  // already exists
-  mode_t metadata = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
-  // create a file with rw-rw-rw- permissions if one doesn't exist
-  ssize_t bytes_read;
-  static char buff[BUFFSIZE];
+  FILE *source = NULL;
+  FILE *destination = NULL;
+  static char buffer[BUFFSIZE];
+  int err_check, bytes_read;
+  err_check = 0;
 
-  source = open (src, O_RDONLY);
-  if (source == -1)
+  dest = format_dest (src, dest); // formats the destination.
+  // for example if src = ../path/to/myfile and dest = -d../another/path/
+  // then format_dest() makes dest = ../another/path/myfile
+
+  source = fopen (src, "rb"); // read binary
+  if (source == NULL)
   {
-    print_error ("Couldn\'t create a copy of a file ", src);
+    print_error ("Couldn\'t create a copy of file ", src);
     err_check = -1;
-    goto quit;
   }
-  destination = open (dest, permissions, metadata);
-  if (destination == -1)
+  destination = fopen (dest, "w+b");
+  if (destination == NULL)
   {
-    print_error ("Couldn\'t create a copy of a file ", dest );
-    // skill issue of your OS imo :/
+    fclose (source);
+    print_error ("Couldn\'t create a copy of file ", src);
     err_check = -1;
-    goto quitall;
   }
 
-  while ((bytes_read = read (source, buff, BUFFSIZE)) > 0)
-  {
-    err_check = write (destination, buff, bytes_read);
-    if (err_check == -1)
-    {
-      print_error ("An error occured while copying ", src);
-      break;
-    }
-  }
-quitall:
-  free (dest);
-quit:
-  close (source);
-  close (destination);
-  printf ("%d", err_check);
+  free (dest); // frees the memory dest is pointing at
+  // cuz it's actually allocated on the heap not stack
   if (err_check == -1)
-    return 1;
-  return 0;
+    goto end;
+
+  while (bytes_read != EOF)
+  {
+    if (fgets (buffer, BUFFSIZE, source) == NULL)
+      break;
+    bytes_read = fputs (buffer, destination);
+  }
+end:
+  fclose (source);
+  fclose (destination);
+  return (err_check != 0) ? 1 : err_check;
 }
