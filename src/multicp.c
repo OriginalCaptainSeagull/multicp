@@ -1,28 +1,53 @@
 #include "signatures.h"
 #include "api.h"
 #include "types.h"
+#define ARGS (argc - 1)
 
 int main (int argc, char *argv[])
 {
-  if (check_number_of_args (argc))
+  if (check_number_of_args (argc)) // check cliargs.c
     return 1;
 
-  int dest_arg = 0;
-  dest_arg = determine_dest (argv, argc);
-  if (dest_arg == -1)
+  char** files = (char**) calloc (ARGS, sizeof (char**));
+  if (files == NULL)
     return 1;
-  if (dest_arg == 0)
+
+  char** destinations = (char**) calloc (ARGS, sizeof (char**));
+  if (destinations == NULL)
   {
-    usage_error ("Couldn\'t find destinantion!\nExample: multicp FILES... -dDESTINATION FILES...\n");
+    free (files);
     return 1;
   }
 
-  for (unsigned i = 1; i < argc; ++i)
+  int filecount = fill_with_files (argv, files, argc);
+  if (!filecount)
   {
-    if (i == dest_arg)
-      continue;
-    if (copy_file (argv[i], argv[dest_arg]))
-      return 1;
+    free (files);
+    free (destinations);
+    usage_error ("No files found!");
+    return 1;
   }
-  return 0;
+
+  int dircount = fill_with_destinations (argv, destinations, argc);
+  if (!dircount)
+  {
+    free (files);
+    free (destinations);
+    usage_error ("Nice directories dude!");
+    return 1;
+  }
+
+  unsigned err_check;
+  for (unsigned i = 0; i < filecount; ++i)
+  {
+    for (unsigned j = 0; j < dircount; ++j)
+      err_check = copy_file (files[i], destinations[j]);
+    if (err_check)
+      goto end;
+  }
+
+end:
+  free (files);
+  free (destinations);
+  return err_check;
 }

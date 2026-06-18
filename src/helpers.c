@@ -2,11 +2,6 @@
 #include "types.h"
 #include "api.h"
 #include "signatures.h"
-#ifndef STD_C
-#define STD_C
-#include <stdlib.h>
-#include <string.h>
-#endif
 
 void print_error (const char *error, const char *filename)
 {

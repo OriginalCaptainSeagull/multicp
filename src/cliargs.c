@@ -2,11 +2,8 @@
 #include "colors.h"
 #include "api.h"
 #include "types.h"
-#ifndef STD_C
-#define STD_C
-#include <stdlib.h>
-#include <string.h>
-#endif
+static const char* const dir = "-d";
+// static const char* const ver = "-v";
 
 void usage_error (const char* restrict error)
 {
@@ -16,6 +13,34 @@ void usage_error (const char* restrict error)
   fprintf (stderr, "%s\n", error);
   exit (EXIT_FAILURE);
   return;
+}
+
+int fill_with_files (char **argv, char **files, int argc)
+{
+  int filecount = 0;
+  for (unsigned i = 1; i < argc; ++i)
+  {
+    if (strncmp (argv[i], dir, 2))
+    {
+      files[filecount] = argv[i];
+      ++filecount;
+    }
+  }
+  return filecount;
+}
+
+int fill_with_destinations (char **argv, char **destinations, int argc)
+{
+  int dircount = 0;
+  for (unsigned i = 1; i < argc; ++i)
+  {
+    if (strncmp (argv[i], dir, 2) == 0)
+    {
+      destinations[dircount] = argv[i];
+      ++dircount;
+    }
+  }
+  return dircount;
 }
 
 int check_number_of_args (int argc)
@@ -29,15 +54,7 @@ int check_number_of_args (int argc)
   }
   return 0;
 }
-
-int search_for_dest (const char *arg)
-{
-  static const char *const flag = "-d";
-  if (strncmp (flag, arg, 2))
-    return 1;
-  return 0;
-}
-
+/*
 int determine_dest (char *argv[], int argc)
 {
   int dest_arg = 0;
@@ -54,3 +71,4 @@ int determine_dest (char *argv[], int argc)
   }
   return dest_arg;
 }
+*/
