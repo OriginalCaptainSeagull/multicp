@@ -69,7 +69,7 @@ int copy_file (char *src, char *dest)
 {
   FILE *source = NULL;
   FILE *destination = NULL;
-  static char buffer[BUFFSIZE];
+  static char buffer[BUFFSIZE+1];
   int err_check, bytes_read;
   err_check = 0;
 
@@ -81,14 +81,16 @@ int copy_file (char *src, char *dest)
   if (source == NULL)
   {
     print_error ("Couldn\'t create a copy of file ", src);
-    err_check = -1;
+    free (dest);
+    return 1;
   }
   destination = fopen (dest, "w+b");
   if (destination == NULL)
   {
     fclose (source);
+    free (dest);
     print_error ("Couldn\'t create a copy of file ", src);
-    err_check = -1;
+    return 1;
   }
 
   free (dest); // frees the memory dest is pointing at
@@ -98,10 +100,11 @@ int copy_file (char *src, char *dest)
 
   while (bytes_read != EOF)
   {
-    if (fgets (buffer, BUFFSIZE, source) == NULL)
+    if (fgets (buffer, BUFFSIZE+1, source) == NULL)
       break;
     bytes_read = fputs (buffer, destination);
   }
+
 end:
   fclose (source);
   fclose (destination);
