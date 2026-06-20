@@ -2,11 +2,14 @@
 #include "types.h"
 #include "api.h"
 #include "signatures.h"
+#include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 void print_error (const char *error, const char *filename)
 {
   fprintf (stderr, COLOR_RED);
-  fprintf (stderr, "multicp: error: ");
+  fprintf (stderr, "multicp error: ");
   fprintf (stderr, COLOR_RESET);
   fprintf (stderr, "%s%s: %s\n", error, filename, strerror(errno));
   return;
@@ -62,46 +65,42 @@ char *format_dest (char *raw_src, char *raw_dest)
 
 int copy_file (char *src, char *dest)
 {
-  FILE *source = NULL;
-  FILE *destination = NULL;
-  static char buffer[BUFFSIZE+1];
-  int err_check, bytes_read;
-  err_check = 0;
+  file source, destination;
+  int error_check = 0;
+  int bytes_read;
+  static char *buffer[BUFFSIZE];
 
-  dest = format_dest (src, dest); // formats the destination.
-  // for example if src = ../path/to/myfile and dest = -d../another/path/
-  // then format_dest() makes dest = ../another/path/myfile
-
-  source = fopen (src, "rb"); // read binary
-  if (source == NULL)
+  source = open (src, O_RDONLY);
+  if (source == -1)
   {
-    print_error ("Couldn\'t create a copy of file ", src);
-    free (dest);
-    return 1;
-  }
-  destination = fopen (dest, "w+b");
-  if (destination == NULL)
-  {
-    fclose (source);
-    free (dest);
-    print_error ("Couldn\'t create a copy of file ", src);
-    return 1;
+    print_error ("Couldn\'t open the file ", src);
+    return -1;
   }
 
-  free (dest); // frees the memory dest is pointing at
-  // cuz it's actually allocated on the heap not stack
-  if (err_check == -1)
-    goto end;
-
-  while (bytes_read != EOF)
+  dest = format_dest (src, dest);
+  destination = open (dest, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IWUSR | S_IWGRP | S_IRGRP | S_IROTH | S_IWOTH);
+  free (dest);
+  if (destination == -1)
   {
-    if (fgets (buffer, BUFFSIZE+1, source) == NULL)
+    print_error ("Couldn\'t create copy of file", NULL);
+    close (source);
+    return -1;
+  }
+
+  while (bytes_read != 0)
+  {
+    bytes_read = read (source, buffer, BUFFSIZE);
+    if (bytes_read == -1)
+    {
+      error_check = -1;
       break;
-    bytes_read = fputs (buffer, destination);
+    }
+    error_check = write (destination, buffer, bytes_read);
+    if (error_check == -1)
+      break;
   }
 
-end:
-  fclose (source);
-  fclose (destination);
-  return (err_check != 0) ? 1 : err_check;
+  close (destination);
+  close (source);
+  return error_check;
 }
