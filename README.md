@@ -4,6 +4,6 @@ Usage: multicp FILES[@RENAME] -dDESTINATIONS FILES[@RENAME]
 
 Example: multicp ../cooldir/coolfile another/dircool/filecool -d~ -d~/coolfiles/
 
-As result, coolfile and filecool are going to be copied to both ~ and ~/coolfiles directories!
+As result, coolfile and filecool are going to be copied to both ~ and ~/coolfiles directories! 
 
 It currently doesn't support some features of default cp like recursive copying but i will add them as I improve my skills
